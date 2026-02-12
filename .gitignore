@@ -1,3 +1,11 @@
+# IDE
+.idea
+.vscode
+
+# DSB-specific
+*.dsb
+*.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
