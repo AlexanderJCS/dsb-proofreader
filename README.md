@@ -2,7 +2,7 @@
 
 The DSB project is split into two repositories. The first repository is a Dragonfly plugin, which processes neuron data to find dendritic spine head center locations. The second repository (this one) proofreads the proposed head centers and computes a radius measurement.
 
-The input for this program is a `.dsb` file, which is acquired from the DSB Dragonfly Plugin. It outputs a CSV containing the head center names, radii, 3D positions, and index.
+The input for this program is a `.dsb` file, which is acquired from the DSB Dragonfly Plugin. It outputs a CSV containing the head center names, radii, 3D positions, index, and label (assigned by a human proofreader).
 
 ## Installation
 
