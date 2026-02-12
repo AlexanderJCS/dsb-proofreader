@@ -212,7 +212,7 @@ class SpineProofreadVisualizer:
 
             distance = np.linalg.norm(self.pv_mesh.bounds[1] - self.pv_mesh.bounds[0]) * 0.5
             self.plotter.camera.position = point + np.array([0, -distance, distance * 0.5])
-            self.plotter.camera.view_up = [0, 0, 1]
+            self.plotter.camera.up = [0, 0, 1]
 
         self.plotter.render()
 
