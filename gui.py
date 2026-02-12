@@ -17,13 +17,8 @@ class FileSelectionGUI:
 
     def browse_file(self, on_start_callback):
         """Open file dialog to select .dsb file."""
-        script_dir = Path(__file__).parent
-        project_dir = script_dir.parent.parent
-        initial_dir = project_dir / "data" / "proofreading"
-
         filename = filedialog.askopenfilename(
             title="Select DSB File",
-            initialdir=str(initial_dir) if initial_dir.exists() else str(project_dir),
             filetypes=[("DSB files", "*.dsb"), ("All files", "*.*")]
         )
 
