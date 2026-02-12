@@ -50,9 +50,13 @@ class SpineProofreadVisualizer:
         :param initial_spine_names: Optional list of initial spine names.
         :param initial_radii: Optional list of initial radii for each point.
         """
+        print(f"[VISUALIZER] Initializing visualizer...")
+        print(f"[VISUALIZER] Wrapping trimesh with PyVista...")
         self.trimesh_mesh = mesh
         self.pv_mesh = pv.wrap(mesh)
+        print(f"[VISUALIZER] Wrapping PSDs mesh...")
         self.psds = pv.wrap(psds) if psds is not None else None
+        print(f"[VISUALIZER] Setting up annotation data...")
         self.annotation = annotation
         self.points = points
         self.original_points = original_head_centers if original_head_centers is not None else points.copy()
@@ -66,9 +70,12 @@ class SpineProofreadVisualizer:
 
         # Auto-generate spine names based on closest annotation or use provided names
         if initial_spine_names is not None:
+            print(f"[VISUALIZER] Using provided spine names")
             self.spine_names = initial_spine_names
         else:
+            print(f"[VISUALIZER] Generating spine names from annotations...")
             self.spine_names = self._generate_spine_names()
+            print(f"[VISUALIZER] Generated {len(self.spine_names)} spine names")
 
         # Visualization objects
         self.plotter = None
@@ -86,6 +93,7 @@ class SpineProofreadVisualizer:
 
         # Visual settings
         self.sphere_radius = 40
+        print(f"[VISUALIZER] Initialization complete")
 
     def _generate_spine_names(self):
         """
@@ -147,36 +155,46 @@ class SpineProofreadVisualizer:
 
     def get_radius_for_point(self, index) -> float:
         if self.head_radii[index] is None:
+            print(f"[RADIUS] Computing radius for point {index} using raycasting (200 rays)...")
             self.head_radii[index] = radius.get_radius_point(
                 self.points[index], self.trimesh_mesh, n_rays=200
             )
+            print(f"[RADIUS] Radius computed: {self.head_radii[index]:.2f} nm")
 
         return self.head_radii[index]
 
     def _update_radius_indicator(self):
         """Update radius indicator to show for this point."""
+        print(f"[RADIUS] Updating radius indicator for point {self.current_index}...")
         head_radius = self.get_radius_for_point(self.current_index)
 
+        print(f"[RADIUS] Creating radius sphere with radius {head_radius:.2f}...")
         radius_sphere = pv.Sphere(
             radius=head_radius,
             center=self.points[self.current_index],
         )
 
         if self.radius_indicator_actor is not None:
+            print(f"[RADIUS] Removing old radius indicator...")
             self.plotter.remove_actor(self.radius_indicator_actor)
 
+        print(f"[RADIUS] Adding new radius indicator...")
         self.radius_indicator_actor = self.plotter.add_mesh(
             radius_sphere,
             color="blue",
             opacity=0.2,
         )
+        print(f"[RADIUS] Radius indicator updated")
 
     def update_info_text(self):
         """Update the information text display."""
+        print(f"[INFO] Updating info text for point {self.current_index}...")
         label = self.labels[self.current_index]
 
         # Get current radius (compute if not available yet)
+        print(f"[INFO] Getting radius for point {self.current_index}...")
         current_radius = self.get_radius_for_point(self.current_index)
+        print(f"[INFO] Radius obtained: {current_radius:.2f} nm")
 
         radius_text = f"{current_radius:.2f} nm"
 
@@ -192,29 +210,41 @@ class SpineProofreadVisualizer:
             f"  Ctrl/Cmd S: Save results"
         )
 
+        print(f"[INFO] Adding text to plotter...")
         self.plotter.add_text(
             info_text,
             position='upper_left',
             font_size=10,
             name='info_text'
         )
+        print(f"[INFO] Info text updated")
 
     def focus_on_current_sphere(self, move_camera=True):
         """Focus on the current sphere."""
+        print(f"[FOCUS] focus_on_current_sphere called, move_camera={move_camera}")
         if self.plotter is None:
+            print(f"[FOCUS] Plotter is None, returning early")
             return
 
+        print(f"[FOCUS] Updating info text...")
         self.update_info_text()
 
         if move_camera:
+            print(f"[FOCUS] Moving camera to sphere {self.current_index}...")
             point = self.points[self.current_index]
+            print(f"[FOCUS] Setting focal point...")
             self.plotter.camera.focal_point = point
 
+            print(f"[FOCUS] Calculating camera position...")
             distance = np.linalg.norm(self.pv_mesh.bounds[1] - self.pv_mesh.bounds[0]) * 0.5
+            print(f"[FOCUS] Setting camera position...")
             self.plotter.camera.position = point + np.array([0, -distance, distance * 0.5])
+            print(f"[FOCUS] Setting camera up vector...")
             self.plotter.camera.up = [0, 0, 1]
 
+        print(f"[FOCUS] Rendering...")
         self.plotter.render()
+        print(f"[FOCUS] Focus complete")
 
     def go_to_sphere(self, index):
         """
@@ -341,25 +371,32 @@ class SpineProofreadVisualizer:
 
     def initialize_scene(self):
         """Initialize the 3D scene with mesh and points."""
+        print(f"[SCENE] Adding main mesh to scene...")
         # Add mesh
         self.plotter.add_mesh(self.pv_mesh, opacity=0.5, color='white')
 
         # Add PSDs mesh if available (desaturated orange with 80% opacity)
         if self.psds is not None:
+            print(f"[SCENE] Adding PSDs mesh to scene...")
             self.plotter.add_mesh(self.psds, opacity=0.8, color='#D4A574')
 
         # Add all points as spheres
+        print(f"[SCENE] Adding {self.num_points} spheres to scene...")
         for i, point in enumerate(self.points):
+            if i % 10 == 0:  # Print progress every 10 spheres
+                print(f"[SCENE] Adding sphere {i}/{self.num_points}...")
             color = self.get_sphere_color(i)
             sphere = pv.Sphere(radius=self.sphere_radius, center=point)
             actor = self.plotter.add_mesh(sphere, color=color, opacity=1.0)
             self.head_center_actors.append(actor)
 
         # Show radius indicator for the first point
+        print(f"[SCENE] Updating initial sphere color...")
         self.update_sphere_color(self.current_index)
 
         # Add annotation points and labels if available
         if self.annotation is not None:
+            print(f"[SCENE] Adding {len(self.annotation)} annotation points and labels...")
             for annotation_point, annotation_name in self.annotation:
                 # Add small sphere for annotation point (yellow/gold color)
                 annotation_sphere = pv.Sphere(radius=self.sphere_radius * 0.5, center=annotation_point)
@@ -386,7 +423,9 @@ class SpineProofreadVisualizer:
                 )
                 self.annotation_label_actors.append(label_actor)
 
+        print(f"[SCENE] Updating annotation label visibility...")
         self.update_annotation_label_visibility()
+        print(f"[SCENE] Scene initialization complete")
 
     def on_text_focus_in(self):
         """Called when text input gains focus."""
@@ -485,30 +524,37 @@ class SpineProofreadVisualizer:
 
     def run(self):
         """Run the interactive visualization."""
+        print(f"[VISUALIZER] Starting run method...")
         # Create Qt application
+        print(f"[VISUALIZER] Creating Qt application...")
         app = QtWidgets.QApplication.instance()
         if app is None:
             app = QtWidgets.QApplication([])
 
         # Create main window
+        print(f"[VISUALIZER] Creating main window...")
         self.main_window = QtWidgets.QMainWindow()
         self.main_window.setWindowTitle("Spine Proofreading Tool")
 
         # Add toolbar
+        print(f"[VISUALIZER] Creating toolbar...")
         toolbar = self.create_toolbar()
         self.main_window.addToolBar(toolbar)
 
         # Create central widget and layout
+        print(f"[VISUALIZER] Setting up central widget...")
         central_widget = QtWidgets.QWidget()
         self.main_window.setCentralWidget(central_widget)
         layout = QtWidgets.QVBoxLayout()
         central_widget.setLayout(layout)
 
         # Create PyVista plotter using QtInteractor
+        print(f"[VISUALIZER] Creating PyVista plotter...")
         self.plotter = QtInteractor(central_widget)
         layout.addWidget(self.plotter.interactor)
 
         # Create text input at the bottom
+        print(f"[VISUALIZER] Creating text input widgets...")
         text_layout = QtWidgets.QHBoxLayout()
         label = QtWidgets.QLabel("Spine Name:")
         self.text_input = FocusLineEdit()
@@ -526,22 +572,31 @@ class SpineProofreadVisualizer:
         layout.addLayout(text_layout)
 
         # Add loading text
+        print(f"[VISUALIZER] Adding loading text...")
         self.plotter.add_text("Loading...", position='upper_left', font_size=10, name='info_text')
 
         # Initialize scene and callbacks
+        print(f"[VISUALIZER] Initializing 3D scene...")
         self.initialize_scene()
+        print(f"[VISUALIZER] Setting up key callbacks...")
         self.setup_key_callbacks()
+        print(f"[VISUALIZER] Setting up Qt shortcuts...")
         self.setup_qt_shortcuts()
 
         # Set initial spine name in text input
+        print(f"[VISUALIZER] Setting initial spine name...")
         self.text_input.setText(self.spine_names[self.current_index])
 
+        print(f"[VISUALIZER] Resetting camera...")
         self.plotter.reset_camera()
+        print(f"[VISUALIZER] Focusing on current sphere...")
         self.focus_on_current_sphere()
 
         # Show the window
+        print(f"[VISUALIZER] Showing window...")
         self.main_window.resize(1024, 768)
         self.main_window.show()
 
         # Start the Qt event loop
+        print(f"[VISUALIZER] Starting Qt event loop...")
         app.exec_()

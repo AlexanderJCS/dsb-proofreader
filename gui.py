@@ -17,26 +17,31 @@ class FileSelectionGUI:
 
     def browse_file(self, on_start_callback):
         """Open file dialog to select .dsb file."""
+        print(f"[GUI] Opening file dialog...")
         filename = filedialog.askopenfilename(
             title="Select DSB File",
             filetypes=[("DSB files", "*.dsb"), ("All files", "*.*")]
         )
 
         if filename:
+            print(f"[GUI] File selected: {filename}")
             self.selected_file_path = filename
             # Hide the Tkinter window
             self.root.withdraw()
 
             try:
                 # Call the callback to start visualization
+                print(f"[GUI] Calling visualization callback...")
                 on_start_callback(self.selected_file_path)
 
                 # Close the Tkinter window after visualization is done
+                print(f"[GUI] Visualization callback completed, closing window...")
                 self.root.quit()
                 self.root.destroy()
 
             except Exception as e:
                 # Show the window again if there's an error
+                print(f"[GUI] Error occurred: {e}")
                 self.root.deiconify()
                 messagebox.showerror("Error", f"Failed to load or visualize file:\n{str(e)}")
                 raise e
