@@ -175,7 +175,6 @@ def get_radius_point(point: np.ndarray, mesh, n_rays=20, aggregate='mean', proje
     :returns radius at point
 
     """
-    print(f"[RAYCAST] Starting raycast with {n_rays} rays, projection={projection}")
     agg_map = {'mean': np.mean, 'max': np.max, 'min': np.min,
                'median': np.median, 'percentile75': lambda x: np.percentile(x, 75), 'percentile99': lambda x: np.percentile(x, 99)}
     assert aggregate in agg_map
@@ -185,14 +184,12 @@ def get_radius_point(point: np.ndarray, mesh, n_rays=20, aggregate='mean', proje
     assert (fallback == 'knn') or isinstance(fallback, numbers.Number) or isinstance(fallback, type(None))
 
     # Get max dimension of mesh
-    print(f"[RAYCAST] Calculating mesh dimensions...")
     dim = mesh.vertices.max(axis=0) - mesh.vertices.min(axis=0)
     radius = max(dim)
 
     # Vertices for each point on the circle
     sources = np.repeat(np.array([point]), n_rays, axis=0)
 
-    print(f"[RAYCAST] Generating ray targets...")
     if projection == 'sphere':
         targets = fibonacci_sphere(n_rays, randomize=True) * radius  # Uniform sphere points sphere scaled by radius
         targets = np.tile(targets, (1, 1))  # Reshape to match sources
@@ -226,18 +223,14 @@ def get_radius_point(point: np.ndarray, mesh, n_rays=20, aggregate='mean', proje
         targets = sources + disk
 
     # Initialize ncollpyde Volume
-    print(f"[RAYCAST] Initializing ncollpyde collision volume...")
     coll = ncollpyde.Volume(mesh.vertices, mesh.faces, validate=False)
 
     # Get intersections: `ix` points to index of line segment; `loc` is the
     #  x/y/z coordinate of the intersection and `is_backface` is True if
     # intersection happened at the inside of a mesh
-    print(f"[RAYCAST] Computing ray-mesh intersections...")
     ix, loc, is_backface = coll.intersections(sources, targets)
-    print(f"[RAYCAST] Found {len(ix)} intersections")
 
     # Calculate intersection distances
-    print(f"[RAYCAST] Calculating distances...")
     dist = np.sqrt(np.sum((sources[ix] - loc) ** 2, axis=1))
 
     # Map from `ix` back to index of original point
@@ -248,24 +241,20 @@ def get_radius_point(point: np.ndarray, mesh, n_rays=20, aggregate='mean', proje
     split = np.split(dist, split_ix)
 
     # Aggregate over each original ix
-    print(f"[RAYCAST] Aggregating distances using {aggregate}...")
     final_dist = np.zeros(1)
     for l, i in zip(split, np.unique(org_ix)):
         final_dist[i] = agg_func(l)
 
     if not isinstance(fallback, type(None)):
         # See if any needs fixing
-        print(f"[RAYCAST] Checking if fallback is needed...")
         inside = coll.contains(np.array([point]))
         is_zero = final_dist == 0
         needs_fix = ~inside | is_zero
 
         if any(needs_fix):
-            print(f"[RAYCAST] Applying fallback strategy: {fallback}")
             if isinstance(fallback, numbers.Number):
                 final_dist[needs_fix] = fallback
             elif fallback == 'knn':
                 final_dist[needs_fix] = get_radius_knn(np.array([point]), mesh, aggregate=aggregate)
 
-    print(f"[RAYCAST] Raycast complete, final radius: {final_dist[0]:.2f}")
     return final_dist[0]

@@ -44,26 +44,17 @@ def pld_load(filepath: str) -> Payload:
     :param filepath: The path to load the payload from
     :return: The loaded payload
     """
-    print(f"[PAYLOAD] Opening DSB file: {filepath}")
+
     with zipfile.ZipFile(filepath, "r") as zf:
-        print(f"[PAYLOAD] Reading mesh.stl...")
         mesh_bytes = zf.read("mesh.stl")
-        print(f"[PAYLOAD] Reading annotation.pickle...")
         annotation_bytes = zf.read("annotation.pickle")
-        print(f"[PAYLOAD] Reading head_centers.pickle...")
         head_centers_bytes = zf.read("head_centers.pickle")
-        print(f"[PAYLOAD] Reading psds.stl...")
         psds_bytes = zf.read("psds.stl")
 
-    print(f"[PAYLOAD] Unpickling head_centers...")
     head_centers = pickle.loads(head_centers_bytes)
-    print(f"[PAYLOAD] Loading dendrite mesh from STL...")
     dendrite_mesh = trimesh.load(io.BytesIO(mesh_bytes), force="mesh", file_type="stl")
-    print(f"[PAYLOAD] Unpickling annotation...")
     annotation = pickle.loads(annotation_bytes)
-    print(f"[PAYLOAD] Loading PSDs mesh...")
     psds = trimesh.load(io.BytesIO(psds_bytes), force="mesh", file_type="stl") if psds_bytes else None
-    print(f"[PAYLOAD] All data loaded successfully")
 
     return Payload(
         dendrite_mesh=dendrite_mesh,
@@ -103,24 +94,20 @@ def get_latest_csv_from_dsb(dsb_filepath: str, base_filename: str) -> pd.DataFra
     :param base_filename: Base name for the CSV file (without timestamp)
     :return: DataFrame with the latest CSV data, or None if no CSV found
     """
-    print(f"[PAYLOAD] Searching for CSV files with base: {base_filename}")
     with zipfile.ZipFile(dsb_filepath, "r") as zf:
         # Find all CSV files matching the base filename pattern
         csv_files = [name for name in zf.namelist()
                      if name.startswith(base_filename) and name.endswith('.csv')]
 
         if not csv_files:
-            print(f"[PAYLOAD] No previous CSV files found")
             return None
 
         # Sort by timestamp (embedded in filename) to get the latest
         csv_files.sort(reverse=True)
         latest_csv = csv_files[0]
-        print(f"[PAYLOAD] Found {len(csv_files)} CSV file(s), loading latest: {latest_csv}")
 
         # Read the CSV
         csv_bytes = zf.read(latest_csv)
         csv_data = pd.read_csv(io.BytesIO(csv_bytes))
-        print(f"[PAYLOAD] CSV loaded with {len(csv_data)} rows")
 
         return csv_data
