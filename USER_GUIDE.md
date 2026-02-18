@@ -14,7 +14,7 @@ Then, choose a DSB file to load.
 
 ![Opening a DSB file](images/user_guide/opening.png)
 
-The program may freeze for up to one minute while it loads the DSB file and initializes the visualization.
+The program may freeze or disappear for up to one minute while it loads the DSB file and initializes the visualization.
 
 ## Proofreader Menu
 
@@ -24,13 +24,13 @@ After you open a .dsb file, you will see a window visualizing the 3D neuron data
 
 Use the following controls to move the camera:
 
-| Action             | Control                            |
-|--------------------|------------------------------------|
-| Orbit Camera       | Left Click + Drag                  |
-| Translate Camera   | Shift + Left Click + Drag          |
-| Zoom Camera        | Right Click + Drag OR Scroll Wheel |
-| Rotate Camera      | Command + Left Click + Drag        |
-| View Entire Neuron | R                                  |
+| Action             | Control                                                |
+|--------------------|--------------------------------------------------------|
+| Orbit Camera       | Left Click + Drag                                      |
+| Translate Camera   | Shift + Left Click + Drag OR Middle Mouse Click + Drag |
+| Zoom Camera        | Right Click + Drag OR Scroll Wheel                     |
+| Rotate Camera      | Command + Left Click + Drag                            |
+| View Entire Neuron | R                                                      |
 
 Use the following controls to change how the visualization looks:
 
@@ -51,13 +51,19 @@ You may also use the following keyboard shortcuts:
 | Accept Spine Head       | M       |
 | Reject Spine Head       | N       |
 
-### Moving to the next spine
+### Moving to the next spine head
 
 To proofread the next or previous spine head, use the "Previous" or "Next" buttons in the toolbar.
 
 You may also use the left and right arrow keys to move to the previous or next spine head.
 
 The buttons and arrow keys wrap around. For example, advancing from the final spine head displays the first, and moving backward from the first displays the final.
+
+### Jumping to a spine head
+
+You may jump to a given spine head index by editing the value in the "spine index" field on the bottom of the proofreader window. Then click "Go" to jump to that spine.
+
+![Jumping to a spine](images/user_guide/jump.png)
 
 ### Adjusting spine head position
 
@@ -99,5 +105,9 @@ You can adjust the name of the currently-selected spine head by editing the text
 You may use the "Save" button in the toolbar or the keyboard shortcut Ctrl/Cmd + S to save. It is recommended to save often.
 
 The first save may take several minutes because the proofreader needs to compute spine head radii for all points. While saving for the first time, the window will freeze. Do not close it to avoid losing progres.  Any subsequent saves should be near instant.
+
+You can see the last time you saved in the session on the bottom right of the proofreader window. 
+
+![Last saved time](images/user_guide/last_saved.png)
 
 If you reload a dsb file after saving, the proofreader will remember all spine head names, accepts/rejects, and spine head position adjustments that you made.
