@@ -8,6 +8,7 @@ import pyvista as pv
 from pathlib import Path
 from pyvistaqt import QtInteractor
 from qtpy import QtWidgets, QtCore
+from datetime import datetime
 
 import radius
 import payload
@@ -83,6 +84,11 @@ class SpineProofreadVisualizer:
         self.text_input_active = False
         self.main_window = None
         self.close_labels_only = True  # Show only close labels by default
+        self.last_saved_time = None  # Track last save time
+        self.has_unsaved_changes = False  # Track unsaved changes
+        self.last_saved_label = None  # Label to display last saved time
+        self.spine_index_input = None  # Line edit for spine index navigation
+        self.spine_index_go_button = None  # Go button for spine index navigation
 
         # Visual settings
         self.sphere_radius = 40
@@ -226,18 +232,21 @@ class SpineProofreadVisualizer:
         self.current_index = index
         self.update_sphere_color(self.current_index)
         self.text_input.setText(self.spine_names[self.current_index])
+        self.update_spine_index_input()
         self.update_annotation_label_visibility()
         self.focus_on_current_sphere()
 
     def mark_accepted(self):
         """Mark current point as accepted."""
         self.labels[self.current_index] = 'accepted'
+        self.has_unsaved_changes = True
         self.update_sphere_color(self.current_index)
         self.focus_on_current_sphere(move_camera=False)
 
     def mark_rejected(self):
         """Mark current point as rejected."""
         self.labels[self.current_index] = 'rejected'
+        self.has_unsaved_changes = True
         self.update_sphere_color(self.current_index)
         self.focus_on_current_sphere(move_camera=False)
 
@@ -246,6 +255,7 @@ class SpineProofreadVisualizer:
         self.points[self.current_index] = self.original_points[self.current_index].copy()
 
         # Update visualization
+        self.has_unsaved_changes = True
         self.update_sphere_color(self.current_index)
         self._update_radius_indicator()
 
@@ -280,6 +290,11 @@ class SpineProofreadVisualizer:
         else:
             print("Warning: DSB filepath not provided, skipping DSB save.")
 
+        # Update save tracking
+        self.last_saved_time = datetime.now()
+        self.has_unsaved_changes = False
+        self.update_last_saved_label()
+
     def bump(self, offset):
         """
         Move the current point based on camera orientation.
@@ -302,10 +317,80 @@ class SpineProofreadVisualizer:
         self.points[self.current_index] += step
 
         # Update visualization
+        self.has_unsaved_changes = True
         self.update_sphere_color(self.current_index)
         self._update_radius_indicator()
 
         self.focus_on_current_sphere(move_camera=False)
+
+    def update_last_saved_label(self):
+        """Update the last saved time label."""
+        if self.last_saved_label is not None and self.last_saved_time is not None:
+            time_str = self.last_saved_time.strftime("%Y-%m-%d %H:%M:%S")
+            self.last_saved_label.setText(f"Last saved: {time_str}")
+
+    def update_spine_index_input(self):
+        """Update the spine index input to show the current index."""
+        if self.spine_index_input is not None:
+            # Block signals to prevent triggering validation during programmatic update
+            self.spine_index_input.blockSignals(True)
+            self.spine_index_input.setText(str(self.current_index + 1))  # Display 1-indexed
+            self.spine_index_input.blockSignals(False)
+            self.validate_spine_index_input()
+
+    def validate_spine_index_input(self):
+        """Validate spine index input and enable/disable go button accordingly."""
+        if self.spine_index_input is None or self.spine_index_go_button is None:
+            return
+
+        text = self.spine_index_input.text()
+
+        # Check if text is a valid number
+        try:
+            index = int(text)
+            # Check if index is in valid range (1-indexed for user)
+            if 1 <= index <= self.num_points:
+                # Enable button only if it's different from current index
+                if index - 1 != self.current_index:
+                    self.spine_index_go_button.setEnabled(True)
+                else:
+                    self.spine_index_go_button.setEnabled(False)
+            else:
+                # Out of range
+                self.spine_index_go_button.setEnabled(False)
+        except ValueError:
+            # Not a valid number
+            self.spine_index_go_button.setEnabled(False)
+
+    def on_spine_index_go_clicked(self):
+        """Handle clicking the Go button to navigate to a specific spine index."""
+        try:
+            index = int(self.spine_index_input.text()) - 1  # Convert to 0-indexed
+            if 0 <= index < self.num_points:
+                self.go_to_sphere(index)
+        except ValueError:
+            pass  # Should not happen due to validation, but just in case
+
+    def closeEvent(self, event):
+        """Handle window close event - prompt to save if there are unsaved changes."""
+        if self.has_unsaved_changes:
+            reply = QtWidgets.QMessageBox.question(
+                self.main_window,
+                'Unsaved Changes',
+                'You have unsaved changes. Do you want to save before closing?',
+                QtWidgets.QMessageBox.Save | QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel,
+                QtWidgets.QMessageBox.Save
+            )
+
+            if reply == QtWidgets.QMessageBox.Save:
+                self.save_results()
+                event.accept()
+            elif reply == QtWidgets.QMessageBox.Discard:
+                event.accept()
+            else:  # Cancel
+                event.ignore()
+        else:
+            event.accept()
 
     def setup_key_callbacks(self):
         """Setup keyboard event handlers for movement controls only."""
@@ -399,6 +484,7 @@ class SpineProofreadVisualizer:
     def on_text_changed(self, text):
         """Called when text input changes."""
         self.spine_names[self.current_index] = text
+        self.has_unsaved_changes = True
 
     def update_annotation_label_visibility(self):
         """Update visibility of annotation labels based on distance to current point."""
@@ -494,6 +580,9 @@ class SpineProofreadVisualizer:
         self.main_window = QtWidgets.QMainWindow()
         self.main_window.setWindowTitle("Spine Proofreading Tool")
 
+        # Override close event to prompt for unsaved changes
+        self.main_window.closeEvent = self.closeEvent
+
         # Add toolbar
         toolbar = self.create_toolbar()
         self.main_window.addToolBar(toolbar)
@@ -524,6 +613,37 @@ class SpineProofreadVisualizer:
         text_layout.addWidget(label)
         text_layout.addWidget(self.text_input)
         layout.addLayout(text_layout)
+
+        # Create spine index navigation layout
+        spine_nav_layout = QtWidgets.QHBoxLayout()
+        spine_nav_label = QtWidgets.QLabel("Spine Index:")
+        self.spine_index_input = QtWidgets.QLineEdit()
+        self.spine_index_input.setMaximumWidth(80)
+        self.spine_index_input.setText("1")
+        self.spine_index_input.setPlaceholderText("Index")
+
+        # Connect text changed event for validation
+        self.spine_index_input.textChanged.connect(lambda: self.validate_spine_index_input())
+
+        spine_total_label = QtWidgets.QLabel(f"/ {self.num_points}")
+
+        self.spine_index_go_button = QtWidgets.QPushButton("Go")
+        self.spine_index_go_button.setEnabled(False)  # Initially disabled
+        self.spine_index_go_button.clicked.connect(self.on_spine_index_go_clicked)
+
+        spine_nav_layout.addWidget(spine_nav_label)
+        spine_nav_layout.addWidget(self.spine_index_input)
+        spine_nav_layout.addWidget(spine_total_label)
+        spine_nav_layout.addWidget(self.spine_index_go_button)
+
+        # Add stretch to push everything to the left
+        spine_nav_layout.addStretch()
+
+        # Add last saved label on the right
+        self.last_saved_label = QtWidgets.QLabel("Not saved yet")
+        spine_nav_layout.addWidget(self.last_saved_label)
+
+        layout.addLayout(spine_nav_layout)
 
         # Add loading text
         self.plotter.add_text("Loading...", position='upper_left', font_size=10, name='info_text')
