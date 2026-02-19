@@ -4,9 +4,9 @@ Main entry point for the DSB spine head center proofreading tool.
 
 from pathlib import Path
 
-from gui import FileSelectionGUI
-from visualizer import SpineProofreadVisualizer
-import payload
+from .gui import FileSelectionGUI
+from .visualizer import SpineProofreadVisualizer
+from . import payload
 
 
 def load_and_visualize(file_path):
