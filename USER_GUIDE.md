@@ -71,14 +71,15 @@ You may jump to a given spine head index by editing the value in the "spine inde
 
 If the spine head position requires adjusting (e.g., it is not perfectly in the head center), you may use the following controls to modify the spine head position.
 
-| Action                    | Key |
-|---------------------------|-----|
-| Move head center forward  | I   |
-| Move head center backward | K   |
-| Move head center left     | J   |
-| Move head center right    | L   |
-| Move head center up       | U   |
-| Move head center down     | O   |
+| Action                     | Key |
+|----------------------------|-----|
+| Move head center forward   | I   |
+| Move head center backward  | K   |
+| Move head center left      | J   |
+| Move head center right     | L   |
+| Move head center down      | U   |
+| Move head center up        | O   |
+| Reset head center position | H   |
 
 These controls are relative to the camera view. You may use the Shift key while performing these controls to move the head center a larger distance per step.
 
