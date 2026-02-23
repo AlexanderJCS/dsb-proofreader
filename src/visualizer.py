@@ -364,6 +364,10 @@ class SpineProofreadVisualizer:
 
     def on_spine_index_go_clicked(self):
         """Handle clicking the Go button to navigate to a specific spine index."""
+        # Only proceed if the button is enabled
+        if not self.spine_index_go_button.isEnabled():
+            return
+
         try:
             index = int(self.spine_index_input.text()) - 1  # Convert to 0-indexed
             if 0 <= index < self.num_points:
@@ -624,6 +628,9 @@ class SpineProofreadVisualizer:
 
         # Connect text changed event for validation
         self.spine_index_input.textChanged.connect(lambda: self.validate_spine_index_input())
+
+        # Connect Enter key to trigger Go button (only when enabled)
+        self.spine_index_input.returnPressed.connect(self.on_spine_index_go_clicked)
 
         spine_total_label = QtWidgets.QLabel(f"/ {self.num_points}")
 

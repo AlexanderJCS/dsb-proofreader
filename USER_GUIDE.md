@@ -63,7 +63,7 @@ The buttons and arrow keys wrap around. For example, advancing from the final sp
 
 ### Jumping to a spine head
 
-You may jump to a given spine head index by editing the value in the "spine index" field on the bottom of the proofreader window. Then click "Go" to jump to that spine.
+You may jump to a given spine head index by editing the value in the "spine index" field on the bottom of the proofreader window. Then click "Go" or use the Enter key to jump to that spine.
 
 ![Jumping to a spine](images/user_guide/jump.png)
 
