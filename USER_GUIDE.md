@@ -34,11 +34,13 @@ Use the following controls to move the camera:
 
 Use the following controls to change how the visualization looks:
 
-| Action                  | Control |
-|-------------------------|---------|
-| Toggle 3D Glasses Mode  | 3       |
-| Turn On Wireframe Mode  | W       |
-| Turn Off Wireframe Mode | S       |
+| Action                   | Control |
+|--------------------------|---------|
+| Toggle 3D Glasses Mode   | 3       |
+| Turn On Wireframe Mode   | W       |
+| Turn Off Wireframe Mode  | S       |
+
+> ℹ️ **Info:** 3D glasses mode may not work on all platforms, since it requires GPU driver support. 3D glasses mode may be work more consistently on Apple hardware. It is confirmed to work on an M4 MacBook Pro.
 
 ### Accepting or rejecting spines
 
