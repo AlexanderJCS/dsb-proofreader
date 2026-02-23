@@ -10,8 +10,8 @@ from pyvistaqt import QtInteractor
 from qtpy import QtWidgets, QtCore
 from datetime import datetime
 
-import radius
-import payload
+from . import radius
+from . import payload
 
 
 class FocusLineEdit(QtWidgets.QLineEdit):
