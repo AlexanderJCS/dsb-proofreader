@@ -29,7 +29,7 @@ Use the following controls to move the camera:
 | Orbit Camera       | Left Click + Drag                                      |
 | Translate Camera   | Shift + Left Click + Drag OR Middle Mouse Click + Drag |
 | Zoom Camera        | Right Click + Drag OR Scroll Wheel                     |
-| Rotate Camera      | Command + Left Click + Drag                            |
+| Rotate Camera      | Ctrl/Cmd + Left Click + Drag                           |
 | View Entire Neuron | R                                                      |
 
 Use the following controls to change how the visualization looks:
